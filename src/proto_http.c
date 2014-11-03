@@ -10241,6 +10241,48 @@ smp_fetch_path(struct proxy *px, struct session *l4, void *l7, unsigned int opt,
 	return 1;
 }
 
+
+/* Check on URI PATH END. A pointer to the PATH is stored. The path starts at
+ * the first '/' after the possible hostname, and ends before the possible '?'.
+ */
+static int
+smp_fetch_path_end(struct proxy *px, struct session *l4, void *l7, unsigned int opt,
+               const struct arg *args, struct sample *smp, const char *kw)
+{
+    struct http_txn *txn = l7;
+    char *ptr, *end, *sptr;
+    
+    CHECK_HTTP_MESSAGE_FIRST();
+    
+    end = txn->req.chn->buf->p + txn->req.sl.rq.u + txn->req.sl.rq.u_l;
+    ptr = http_get_path(txn);
+    if (!ptr)
+        return 0;
+    
+    /* OK, we got the '/' ! */
+    smp->type = SMP_T_STR;
+    smp->flags = SMP_F_VOL_1ST | SMP_F_CONST;
+    
+    sptr = ptr;
+    while (ptr < end && *ptr != '?') {
+        if (*ptr == '/') {
+            ptr++;
+            if (ptr == end || *ptr == '?') {
+                ptr--;
+                break;
+            }
+            sptr = ptr;
+        } else {
+            ptr++;
+        }
+    }
+    
+    smp->data.str.str = sptr;
+    smp->data.str.len = ptr - smp->data.str.str;
+    return 1;
+}
+
+
 /* This produces a concatenation of the first occurrence of the Host header
  * followed by the path component if it begins with a slash ('/'). This means
  * that '*' will not be added, resulting in exactly the first Host entry.
@@ -11529,6 +11571,7 @@ static struct sample_fetch_kw_list sample_fetch_keywords = {ILH, {
 	{ "http_first_req",  smp_fetch_http_first_req, 0,                NULL,    SMP_T_BOOL, SMP_USE_HRQHP },
 	{ "method",          smp_fetch_meth,           0,                NULL,    SMP_T_METH, SMP_USE_HRQHP },
 	{ "path",            smp_fetch_path,           0,                NULL,    SMP_T_STR,  SMP_USE_HRQHV },
+    { "path.end",        smp_fetch_path_end,       0,                NULL,    SMP_T_STR,  SMP_USE_HRQHV },
 
 	/* HTTP protocol on the request path */
 	{ "req.proto_http",  smp_fetch_proto_http,     0,                NULL,    SMP_T_BOOL, SMP_USE_HRQHP },

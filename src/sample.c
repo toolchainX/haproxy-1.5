@@ -976,7 +976,8 @@ int smp_resolve_args(struct proxy *p)
 		where = "in";
 		ctx = "sample fetch keyword";
 		switch (cur->ctx) {
-		case ARGC_STK:where = "in stick rule in"; break;
+		case ARGC_STK: where = "in stick rule in"; break;
+		case ARGC_HON: where = "in hash-on rule in"; break;
 		case ARGC_TRK: where = "in tracking rule in"; break;
 		case ARGC_LOG: where = "in log-format string in"; break;
 		case ARGC_HRQ: where = "in http-request header format string in"; break;

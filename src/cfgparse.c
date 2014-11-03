@@ -4772,6 +4772,79 @@ stats_error_parsing:
 			}
 		}
 	}
+    else if (!strcmp(args[0], "hash-on")) { /* add a hash-on type to check */
+      
+        /** hash-on <pattern> [{if | unless} <condition>]
+         *
+         * For example, to hash on userid request param if it exists and is greater than 0:
+         *   acl hash_userid urlp_val(userid) gt 0
+         *   hash-on urlp_val(userid) if hash_userid
+         */
+
+        int myidx = 0;
+        struct hash_rule *hrule;
+        const char *pattern = NULL;
+        struct sample_expr *expr;
+        
+        if (warnifnotcap(curproxy, PR_CAP_BE, file, linenum, args[0], NULL))
+          err_code |= ERR_WARN;
+
+        myidx++;
+        
+        if (*(args[myidx]) == 0) {
+            Alert("parsing [%s:%d] : '%s' expects a pattern to hash on.\n", file, linenum, args[0]);
+            err_code |= ERR_ALERT | ERR_FATAL;
+            goto out;
+        }
+        
+        pattern = args[myidx];
+
+        curproxy->conf.args.ctx = ARGC_HON;
+        expr = sample_parse_expr(args, &myidx, file, linenum, &errmsg, &curproxy->conf.args);
+        if (!expr) {
+            Alert("parsing [%s:%d] : '%s': %s\n", file, linenum, args[0], errmsg);
+            err_code |= ERR_ALERT | ERR_FATAL;
+            goto out;
+        }
+        
+        if (!(expr->fetch->val & SMP_VAL_BE_SET_SRV)) {
+            Alert("parsing [%s:%d] : '%s': fetch method '%s' extracts information from '%s', none of which is available during request.\n",
+                  file, linenum, args[0], expr->fetch->kw, sample_src_names(expr->fetch->use));
+            err_code |= ERR_ALERT | ERR_FATAL;
+            free(expr);
+            goto out;
+        }
+        
+        /* check if we need to allocate an hdr_idx struct for HTTP parsing */
+        curproxy->http_needed |= !!(expr->fetch->use & SMP_USE_HTTP_ANY);
+
+        /* condition is optional, but if it exists, must start with if or unless */
+        if (*(args[myidx]) != 0) {
+            if (strcmp(args[myidx], "if") == 0 || strcmp(args[myidx], "unless") == 0) {
+                if ((cond = build_acl_cond(file, linenum, curproxy, (const char **)args + myidx, &errmsg)) == NULL) {
+                    Alert("parsing [%s:%d] : '%s': error detected while parsing hash-on condition : %s.\n",
+                          file, linenum, args[0], errmsg);
+                    err_code |= ERR_ALERT | ERR_FATAL;
+                    free(expr);
+                    goto out;
+                }
+            }
+            else {
+                Alert("parsing [%s:%d] : '%s': unknown keyword '%s',expected if | unless.\n",
+                      file, linenum, args[0], args[myidx]);
+                err_code |= ERR_ALERT | ERR_FATAL;
+                free(expr);
+                goto out;
+            }
+            err_code |= warnif_cond_conflicts(cond, SMP_VAL_BE_SET_SRV, file, linenum);
+        }
+
+        hrule = (struct hash_rule *)calloc(1, sizeof(*hrule));
+        hrule->cond = cond;
+        hrule->expr = expr;
+        LIST_INIT(&hrule->list);
+        LIST_ADDQ(&curproxy->hash_rules, &hrule->list);
+    }
 	else if (strcmp(args[0], "unique-id-format") == 0) {
 		if (!*(args[1])) {
 			Alert("parsing [%s:%d] : %s expects an argument.\n", file, linenum, args[0]);

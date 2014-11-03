@@ -46,6 +46,7 @@
 #define BE_LB_HASH_PRM  0x00002  /* hash HTTP URL parameter */
 #define BE_LB_HASH_HDR  0x00003  /* hash HTTP header value */
 #define BE_LB_HASH_RDP  0x00004  /* hash RDP cookie value */
+#define BE_LB_HASH_ON   0x00005  /* hash using hash-on */
 
 /* BE_LB_RR_* is used with BE_LB_KIND_RR */
 #define BE_LB_RR_DYN    0x00000  /* dynamic round robin (default) */
@@ -75,17 +76,18 @@
 /* All known variants of load balancing algorithms. These can be cleared using
  * the BE_LB_ALGO mask. For a check, using BE_LB_KIND is preferred.
  */
-#define BE_LB_ALGO_NONE (BE_LB_KIND_NONE | BE_LB_NEED_NONE)    /* not defined */
-#define BE_LB_ALGO_RR   (BE_LB_KIND_RR | BE_LB_NEED_NONE)      /* round robin */
-#define BE_LB_ALGO_LC   (BE_LB_KIND_CB | BE_LB_NEED_NONE | BE_LB_CB_LC)    /* least connections */
-#define BE_LB_ALGO_FAS  (BE_LB_KIND_CB | BE_LB_NEED_NONE | BE_LB_CB_FAS)   /* first available server */
+#define BE_LB_ALGO_NONE (BE_LB_KIND_NONE | BE_LB_NEED_NONE)                 /* not defined */
+#define BE_LB_ALGO_RR   (BE_LB_KIND_RR | BE_LB_NEED_NONE)                   /* round robin */
+#define BE_LB_ALGO_LC   (BE_LB_KIND_CB | BE_LB_NEED_NONE | BE_LB_CB_LC)     /* least connections */
+#define BE_LB_ALGO_FAS  (BE_LB_KIND_CB | BE_LB_NEED_NONE | BE_LB_CB_FAS)    /* first available server */
 #define BE_LB_ALGO_SRR  (BE_LB_KIND_RR | BE_LB_NEED_NONE | BE_LB_RR_STATIC) /* static round robin */
-#define BE_LB_ALGO_SH	(BE_LB_KIND_HI | BE_LB_NEED_ADDR | BE_LB_HASH_SRC) /* hash: source IP */
-#define BE_LB_ALGO_UH	(BE_LB_KIND_HI | BE_LB_NEED_HTTP | BE_LB_HASH_URI) /* hash: HTTP URI  */
-#define BE_LB_ALGO_PH	(BE_LB_KIND_HI | BE_LB_NEED_HTTP | BE_LB_HASH_PRM) /* hash: HTTP URL parameter */
-#define BE_LB_ALGO_HH	(BE_LB_KIND_HI | BE_LB_NEED_HTTP | BE_LB_HASH_HDR) /* hash: HTTP header value  */
-#define BE_LB_ALGO_RCH	(BE_LB_KIND_HI | BE_LB_NEED_DATA | BE_LB_HASH_RDP) /* hash: RDP cookie value   */
-#define BE_LB_ALGO      (BE_LB_KIND    | BE_LB_NEED      | BE_LB_PARM    ) /* mask to clear algo */
+#define BE_LB_ALGO_SH	(BE_LB_KIND_HI | BE_LB_NEED_ADDR | BE_LB_HASH_SRC)  /* hash: source IP */
+#define BE_LB_ALGO_UH	(BE_LB_KIND_HI | BE_LB_NEED_HTTP | BE_LB_HASH_URI)  /* hash: HTTP URI  */
+#define BE_LB_ALGO_PH	(BE_LB_KIND_HI | BE_LB_NEED_HTTP | BE_LB_HASH_PRM)  /* hash: HTTP URL parameter */
+#define BE_LB_ALGO_HH	(BE_LB_KIND_HI | BE_LB_NEED_HTTP | BE_LB_HASH_HDR)  /* hash: HTTP header value  */
+#define BE_LB_ALGO_RCH	(BE_LB_KIND_HI | BE_LB_NEED_DATA | BE_LB_HASH_RDP)  /* hash: RDP cookie value   */
+#define BE_LB_ALGO_HASH (BE_LB_KIND_HI | BE_LB_NEED_HTTP | BE_LB_HASH_ON)   /* hash: hash-on */
+#define BE_LB_ALGO      (BE_LB_KIND    | BE_LB_NEED      | BE_LB_PARM    )  /* mask to clear algo */
 
 /* Higher bits define how a given criterion is mapped to a server. In fact it
  * designates the LB function by itself. The dynamic algorithms will also have

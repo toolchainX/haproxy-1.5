@@ -534,6 +534,7 @@ void init_new_proxy(struct proxy *p)
 	LIST_INIT(&p->switching_rules);
 	LIST_INIT(&p->server_rules);
 	LIST_INIT(&p->persist_rules);
+	LIST_INIT(&p->hash_rules);
 	LIST_INIT(&p->sticking_rules);
 	LIST_INIT(&p->storersp_rules);
 	LIST_INIT(&p->tcp_req.inspect_rules);

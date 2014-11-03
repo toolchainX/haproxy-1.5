@@ -946,6 +946,24 @@ static void deinit_sample_arg(struct arg *p)
 		free(p_back);
 }
 
+static void deinit_hash_rules(struct list *rules)
+{
+    struct hash_rule *rule, *ruleb;
+    
+    list_for_each_entry_safe(rule, ruleb, rules, list) {
+        LIST_DEL(&rule->list);
+        deinit_acl_cond(rule->cond);
+        if (rule->expr) {
+            struct sample_conv_expr *conv_expr, *conv_exprb;
+            list_for_each_entry_safe(conv_expr, conv_exprb, &rule->expr->conv_exprs, list)
+            deinit_sample_arg(conv_expr->arg_p);
+            deinit_sample_arg(rule->expr->arg_p);
+            free(rule->expr);
+        }
+        free(rule);
+    }
+}
+
 static void deinit_stick_rules(struct list *rules)
 {
 	struct sticking_rule *rule, *ruleb;
@@ -1125,6 +1143,7 @@ void deinit(void)
 
 		deinit_stick_rules(&p->storersp_rules);
 		deinit_stick_rules(&p->sticking_rules);
+		deinit_hash_rules(&p->hash_rules);
 
 		free(p->appsession_name);
 
