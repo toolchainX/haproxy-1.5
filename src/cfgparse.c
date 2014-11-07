@@ -4783,7 +4783,6 @@ stats_error_parsing:
 
         int myidx = 0;
         struct hash_rule *hrule;
-        const char *pattern = NULL;
         struct sample_expr *expr;
         
         if (warnifnotcap(curproxy, PR_CAP_BE, file, linenum, args[0], NULL))
@@ -4797,8 +4796,6 @@ stats_error_parsing:
             goto out;
         }
         
-        pattern = args[myidx];
-
         curproxy->conf.args.ctx = ARGC_HON;
         expr = sample_parse_expr(args, &myidx, file, linenum, &errmsg, &curproxy->conf.args);
         if (!expr) {
